@@ -331,6 +331,7 @@ export const actionFinalize = register<FormData>({
         editingTextElement: null,
         startBoundElement: null,
         suggestedBinding: null,
+        frameToHighlight: null,
         selectedElementIds:
           element &&
           !appState.activeTool.locked &&
