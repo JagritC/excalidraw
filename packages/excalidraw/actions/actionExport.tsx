@@ -3,6 +3,7 @@ import {
   DEFAULT_EXPORT_PADDING,
   EXPORT_SCALES,
   THEME,
+  matchKey,
 } from "@excalidraw/common";
 
 import { getNonDeletedElements } from "@excalidraw/element";
@@ -369,7 +370,7 @@ export const actionSaveToActiveFile = register({
     }
   },
   keyTest: (event) =>
-    event.key === KEYS.S && event[KEYS.CTRL_OR_CMD] && !event.shiftKey,
+    matchKey(event, KEYS.S) && event[KEYS.CTRL_OR_CMD] && !event.shiftKey,
 });
 
 export const actionSaveFileToDisk = register({
@@ -420,9 +421,7 @@ export const actionSaveFileToDisk = register({
     }
   },
   keyTest: (event) =>
-    event.key.toLowerCase() === KEYS.S &&
-    event.shiftKey &&
-    event[KEYS.CTRL_OR_CMD],
+    matchKey(event, KEYS.S) && event.shiftKey && event[KEYS.CTRL_OR_CMD],
   PanelComponent: ({ updateData }) => (
     <ToolButton
       type="button"
