@@ -1,4 +1,5 @@
 import { queryByText } from "@testing-library/react";
+import { vi } from "vitest";
 
 import { pointFrom } from "@excalidraw/math";
 import {
@@ -701,6 +702,25 @@ describe("textWysiwyg", () => {
         ctrlKey: true,
       });
       expect(h.state.zoom.value).toBe(1);
+    });
+
+    it("should save from the text editor on CtrlOrCmd+S", () => {
+      const executeAction = vi
+        .spyOn(h.app.actionManager, "executeAction")
+        .mockImplementation(() => {});
+
+      const eventHandled = fireEvent.keyDown(textarea, {
+        key: "ы",
+        code: CODES.S,
+        [KEYS.CTRL_OR_CMD]: true,
+      });
+
+      expect(eventHandled).toBe(false);
+      expect(executeAction).toHaveBeenCalledWith(
+        h.app.actionManager.actions.saveToActiveFile,
+      );
+
+      executeAction.mockRestore();
     });
 
     it("text should never go beyond max width", async () => {
@@ -1769,7 +1789,9 @@ describe("textWysiwyg", () => {
 
       API.setSelectedElements([rectangle, text]);
 
-      h.app.actionManager.executeAction(actionBindText);
+      act(() => {
+        h.app.actionManager.executeAction(actionBindText);
+      });
 
       expect(text.angle).toBe(30);
       expect(rectangle.angle).toBe(30);
@@ -1792,7 +1814,9 @@ describe("textWysiwyg", () => {
 
       API.setSelectedElements([arrow, text]);
 
-      h.app.actionManager.executeAction(actionBindText);
+      act(() => {
+        h.app.actionManager.executeAction(actionBindText);
+      });
 
       expect(text.angle).toBe(0);
       expect(arrow.angle).toBe(30);
