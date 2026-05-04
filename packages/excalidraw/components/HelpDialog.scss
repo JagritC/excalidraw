@@ -18,6 +18,13 @@
       gap: 0.75rem;
     }
 
+    &__search {
+      margin-top: 1rem;
+      border: 1px solid var(--dialog-border-color);
+      border-radius: var(--border-radius-lg);
+      overflow: hidden;
+    }
+
     &__btn {
       --background: var(--color-surface-mid);
 
