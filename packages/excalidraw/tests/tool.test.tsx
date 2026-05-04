@@ -1,11 +1,11 @@
 import React from "react";
 
-import { resolvablePromise } from "@excalidraw/common";
+import { CURSOR_TYPE, KEYS, resolvablePromise } from "@excalidraw/common";
 
 import { Excalidraw } from "../index";
 
-import { Pointer } from "./helpers/ui";
-import { act, render } from "./test-utils";
+import { Keyboard, Pointer } from "./helpers/ui";
+import { act, GlobalTestState, render, screen } from "./test-utils";
 
 import type { ExcalidrawImperativeAPI } from "../types";
 
@@ -20,6 +20,7 @@ describe("setActiveTool()", () => {
     const excalidrawAPIPromise = resolvablePromise<ExcalidrawImperativeAPI>();
     await render(
       <Excalidraw
+        handleKeyboardGlobally={true}
         onExcalidrawAPI={(api) => excalidrawAPIPromise.resolve(api as any)}
       />,
     );
@@ -42,6 +43,24 @@ describe("setActiveTool()", () => {
     mouse.up(20, 20);
 
     expect(h.state.activeTool.type).toBe("selection");
+  });
+
+  it("should restore selection feedback after deselecting a shape tool with Escape", () => {
+    act(() => {
+      excalidrawAPI.setActiveTool({ type: "rectangle" });
+    });
+
+    expect(h.state.activeTool.type).toBe("rectangle");
+    expect(GlobalTestState.interactiveCanvas.style.cursor).toBe(
+      CURSOR_TYPE.CROSSHAIR,
+    );
+    expect(screen.getByTestId("toolbar-rectangle")).toBeChecked();
+
+    Keyboard.keyPress(KEYS.ESCAPE);
+
+    expect(h.state.activeTool.type).toBe("selection");
+    expect(GlobalTestState.interactiveCanvas.style.cursor).toBe("");
+    expect(screen.getByTestId("toolbar-selection")).toBeChecked();
   });
 
   it("should support tool locking", async () => {
