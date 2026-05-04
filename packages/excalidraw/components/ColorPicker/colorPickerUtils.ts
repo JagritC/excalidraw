@@ -38,6 +38,13 @@ export const colorPickerHotkeyBindings = [
   ["z", "x", "c", "v", "b"],
 ].flat();
 
+const HEX_COLOR_INPUT_REGEX =
+  /^#?(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
+
+export const isValidHexColorInput = (color: string) => {
+  return HEX_COLOR_INPUT_REGEX.test(color.trim());
+};
+
 export const isCustomColor = ({
   color,
   palette,
