@@ -17,7 +17,7 @@ import { Excalidraw } from "../index";
 import { API } from "./helpers/api";
 import { Keyboard } from "./helpers/ui";
 import { updateTextEditor } from "./queries/dom";
-import { act, render, waitFor } from "./test-utils";
+import { act, render, screen, waitFor } from "./test-utils";
 
 const { h } = window;
 
@@ -73,6 +73,28 @@ describe("search", () => {
       Keyboard.keyPress(KEYS.F);
     });
     expect(searchInput?.matches(":focus")).toBe(true);
+  });
+
+  it("should focus help menu search on cmd+f without opening canvas search", async () => {
+    API.setAppState({
+      openDialog: { name: "help" },
+      openSidebar: null,
+    });
+
+    const helpSearchInput = await screen.findByLabelText("Search help");
+
+    Keyboard.withModifierKeys({ ctrl: true }, () => {
+      Keyboard.keyPress(KEYS.F);
+    });
+
+    expect(h.app.state.openDialog?.name).toBe("help");
+    expect(h.app.state.openSidebar).toBeNull();
+    expect(helpSearchInput.matches(":focus")).toBe(true);
+
+    updateTextEditor(helpSearchInput as HTMLInputElement, "rectangle");
+
+    expect(screen.getByText("Rectangle")).toBeInTheDocument();
+    expect(screen.getByText("Undo")).not.toBeVisible();
   });
 
   it("should match text and cycle through matches on Enter", async () => {

@@ -447,6 +447,8 @@
     "howto": "Follow our guides",
     "or": "or",
     "preventBinding": "Prevent arrow binding",
+    "search": "Search help",
+    "searchPlaceholder": "Search keyboard shortcuts...",
     "tools": "Tools",
     "shortcuts": "Keyboard shortcuts",
     "textFinish": "Finish editing (text editor)",

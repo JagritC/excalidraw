@@ -123,12 +123,56 @@ const ShortcutKey = (props: { children: React.ReactNode }) => (
   <kbd className="HelpDialog__key" {...props} />
 );
 
+const normalizeSearchText = (text: string) => text.toLocaleLowerCase().trim();
+
 export const HelpDialog = ({ onClose }: { onClose?: () => void }) => {
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+  const [searchQuery, setSearchQuery] = React.useState("");
+
   const handleClose = React.useCallback(() => {
     if (onClose) {
       onClose();
     }
   }, [onClose]);
+
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        event[KEYS.CTRL_OR_CMD] &&
+        normalizeSearchText(event.key) === KEYS.F
+      ) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown, {
+      capture: true,
+      passive: false,
+    });
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown, {
+        capture: true,
+      });
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const normalizedSearchQuery = normalizeSearchText(searchQuery);
+
+    document
+      .querySelectorAll<HTMLElement>(".HelpDialog__shortcut")
+      .forEach((shortcut) => {
+        const shortcutText = normalizeSearchText(shortcut.textContent || "");
+
+        shortcut.hidden =
+          !!normalizedSearchQuery &&
+          !shortcutText.includes(normalizedSearchQuery);
+      });
+  }, [searchQuery]);
 
   return (
     <>
@@ -138,6 +182,16 @@ export const HelpDialog = ({ onClose }: { onClose?: () => void }) => {
         className={"HelpDialog"}
       >
         <Header />
+        <div className="HelpDialog__search">
+          <input
+            ref={searchInputRef}
+            aria-label={t("helpDialog.search")}
+            placeholder={t("helpDialog.searchPlaceholder")}
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            type="search"
+          />
+        </div>
         <Section title={t("helpDialog.shortcuts")}>
           <ShortcutIsland
             className="HelpDialog__island--tools"
