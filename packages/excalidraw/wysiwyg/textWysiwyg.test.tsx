@@ -1,4 +1,5 @@
 import { queryByText } from "@testing-library/react";
+import { vi } from "vitest";
 
 import { pointFrom } from "@excalidraw/math";
 import {
@@ -29,6 +30,7 @@ import { getTextEditor, updateTextEditor } from "../tests/queries/dom";
 import {
   GlobalTestState,
   act,
+  createEvent,
   render,
   screen,
   unmountComponent,
@@ -38,7 +40,7 @@ import {
   mockBoundingClientRect,
   restoreOriginalGetBoundingClientRect,
 } from "../tests/test-utils";
-import { actionBindText } from "../actions";
+import { actionBindText, actionSaveToActiveFile } from "../actions";
 
 unmountComponent();
 
@@ -701,6 +703,34 @@ describe("textWysiwyg", () => {
         ctrlKey: true,
       });
       expect(h.state.zoom.value).toBe(1);
+    });
+
+    it("should save via keyboard shortcut while in wysiwyg", () => {
+      const executeActionSpy = vi
+        .spyOn(h.app.actionManager, "executeAction")
+        .mockImplementation(() => {});
+      const onDocumentKeyDown = vi.fn();
+
+      document.addEventListener("keydown", onDocumentKeyDown);
+
+      try {
+        const event = createEvent.keyDown(textarea, {
+          key: KEYS.S.toUpperCase(),
+          ctrlKey: true,
+        });
+
+        fireEvent(textarea, event);
+
+        expect(event.defaultPrevented).toBe(true);
+        expect(onDocumentKeyDown).not.toHaveBeenCalled();
+        expect(executeActionSpy).toHaveBeenCalledWith(
+          actionSaveToActiveFile,
+          "keyboard",
+        );
+      } finally {
+        document.removeEventListener("keydown", onDocumentKeyDown);
+        executeActionSpy.mockRestore();
+      }
     });
 
     it("text should never go beyond max width", async () => {
