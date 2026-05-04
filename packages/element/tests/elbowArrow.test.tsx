@@ -1,10 +1,14 @@
-import { ARROW_TYPE } from "@excalidraw/common";
+import { ARROW_TYPE, KEYS } from "@excalidraw/common";
 import { pointFrom } from "@excalidraw/math";
 import { Excalidraw } from "@excalidraw/excalidraw";
 import { actionSelectAll } from "@excalidraw/excalidraw/actions";
 import { actionDuplicateSelection } from "@excalidraw/excalidraw/actions/actionDuplicateSelection";
 import { API } from "@excalidraw/excalidraw/tests/helpers/api";
-import { Pointer, UI } from "@excalidraw/excalidraw/tests/helpers/ui";
+import {
+  Keyboard,
+  Pointer,
+  UI,
+} from "@excalidraw/excalidraw/tests/helpers/ui";
 import {
   act,
   fireEvent,
@@ -257,6 +261,38 @@ describe("elbow arrow ui", () => {
       [39, 200],
       [78, 200],
     ]);
+  });
+
+  it("cycles arrow shape with Tab when arrow is bound", () => {
+    const rectangle = UI.createElement("rectangle", {
+      x: 60,
+      y: 0,
+      width: 100,
+      height: 100,
+    });
+
+    API.setAppState({
+      currentItemArrowType: ARROW_TYPE.sharp,
+      currentItemRoundness: "sharp",
+    });
+    const arrow = UI.createElement("arrow", {
+      x: 0,
+      y: 50,
+      width: 70,
+      height: 0,
+    });
+
+    expect(arrow.endBinding?.elementId).toBe(rectangle.id);
+    expect(arrow.elbowed).toBe(false);
+    expect(arrow.roundness).toBe(null);
+
+    h.app.excalidrawContainerValue.container?.focus();
+    Keyboard.keyDown(KEYS.TAB);
+    Keyboard.keyDown(KEYS.TAB);
+
+    expect(arrow.endBinding?.elementId).toBe(rectangle.id);
+    expect(arrow.elbowed).toBe(false);
+    expect(arrow.roundness).not.toBe(null);
   });
 
   it("can follow bound rotated shapes", async () => {
