@@ -1789,7 +1789,9 @@ describe("textWysiwyg", () => {
 
       API.setSelectedElements([rectangle, text]);
 
-      h.app.actionManager.executeAction(actionBindText);
+      act(() => {
+        h.app.actionManager.executeAction(actionBindText);
+      });
 
       expect(text.angle).toBe(30);
       expect(rectangle.angle).toBe(30);
@@ -1812,7 +1814,9 @@ describe("textWysiwyg", () => {
 
       API.setSelectedElements([arrow, text]);
 
-      h.app.actionManager.executeAction(actionBindText);
+      act(() => {
+        h.app.actionManager.executeAction(actionBindText);
+      });
 
       expect(text.angle).toBe(0);
       expect(arrow.angle).toBe(30);
