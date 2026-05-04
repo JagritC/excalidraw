@@ -189,16 +189,20 @@ describe("elbow arrow routing", () => {
       height: 200,
       points: [pointFrom(0, 0), pointFrom(90, 200)],
     }) as ExcalidrawElbowArrowElement;
-    API.setElements([rectangle1, rectangle2, arrow]);
+    act(() => {
+      API.setElements([rectangle1, rectangle2, arrow]);
 
-    bindBindingElement(arrow, rectangle1, "orbit", "start", h.scene);
-    bindBindingElement(arrow, rectangle2, "orbit", "end", h.scene);
+      bindBindingElement(arrow, rectangle1, "orbit", "start", h.scene);
+      bindBindingElement(arrow, rectangle2, "orbit", "end", h.scene);
+    });
 
     expect(arrow.startBinding).not.toBe(null);
     expect(arrow.endBinding).not.toBe(null);
 
-    h.scene.mutateElement(arrow, {
-      points: [pointFrom<LocalPoint>(0, 0), pointFrom<LocalPoint>(90, 200)],
+    act(() => {
+      h.scene.mutateElement(arrow, {
+        points: [pointFrom<LocalPoint>(0, 0), pointFrom<LocalPoint>(90, 200)],
+      });
     });
 
     expect(arrow.points).toCloselyEqualPoints([
