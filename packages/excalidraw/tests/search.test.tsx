@@ -17,7 +17,7 @@ import { Excalidraw } from "../index";
 import { API } from "./helpers/api";
 import { Keyboard } from "./helpers/ui";
 import { updateTextEditor } from "./queries/dom";
-import { act, render, waitFor } from "./test-utils";
+import { act, fireEvent, render, screen, waitFor } from "./test-utils";
 
 const { h } = window;
 
@@ -73,6 +73,34 @@ describe("search", () => {
       Keyboard.keyPress(KEYS.F);
     });
     expect(searchInput?.matches(":focus")).toBe(true);
+  });
+
+  it("should focus help dialog search on cmd+f without opening canvas search", async () => {
+    API.setAppState({
+      openDialog: { name: "help" },
+    });
+
+    const helpSearchInput = await screen.findByLabelText("Quick search");
+    const documentationLink = screen.getByText("Documentation");
+
+    documentationLink.focus();
+    expect(helpSearchInput.matches(":focus")).toBe(false);
+
+    Keyboard.withModifierKeys({ ctrl: true }, () => {
+      Keyboard.keyPress(KEYS.F, documentationLink);
+    });
+
+    expect(helpSearchInput.matches(":focus")).toBe(true);
+    expect(h.app.state.openSidebar).toBeNull();
+
+    fireEvent.change(helpSearchInput, { target: { value: "zoom" } });
+
+    expect(
+      screen.getByText("Zoom in").closest(".HelpDialog__shortcut"),
+    ).not.toHaveProperty("hidden", true);
+    expect(
+      screen.getByText("Rectangle").closest(".HelpDialog__shortcut"),
+    ).toHaveProperty("hidden", true);
   });
 
   it("should match text and cycle through matches on Enter", async () => {

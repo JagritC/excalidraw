@@ -11,6 +11,7 @@ import { getShortcutKey } from "../shortcut";
 
 import { Dialog } from "./Dialog";
 import { ExternalLinkIcon, GithubIcon, youtubeIcon } from "./icons";
+import { QuickSearch } from "./QuickSearch";
 
 import "./HelpDialog.scss";
 
@@ -99,6 +100,8 @@ const Shortcut = ({
   shortcuts: string[];
   isOr?: boolean;
 }) => {
+  const searchText = `${label} ${shortcuts.join(" ")}`.toLocaleLowerCase();
+
   const splitShortcutKeys = shortcuts.map((shortcut) => {
     const keys = shortcut.endsWith("++")
       ? [...shortcut.slice(0, -2).split("+"), "+"]
@@ -110,7 +113,7 @@ const Shortcut = ({
   });
 
   return (
-    <div className="HelpDialog__shortcut">
+    <div className="HelpDialog__shortcut" data-search={searchText}>
       <div>{label}</div>
       <div className="HelpDialog__key-container">
         {[...intersperse(splitShortcutKeys, isOr ? t("helpDialog.or") : null)]}
@@ -124,11 +127,42 @@ const ShortcutKey = (props: { children: React.ReactNode }) => (
 );
 
 export const HelpDialog = ({ onClose }: { onClose?: () => void }) => {
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+
   const handleClose = React.useCallback(() => {
     if (onClose) {
       onClose();
     }
   }, [onClose]);
+
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event[KEYS.CTRL_OR_CMD] && event.key === KEYS.F) {
+        event.preventDefault();
+        event.stopPropagation();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown, { capture: true });
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown, { capture: true });
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const shortcuts = document.querySelectorAll<HTMLElement>(
+      ".HelpDialog .HelpDialog__shortcut",
+    );
+
+    shortcuts.forEach((shortcut) => {
+      shortcut.hidden =
+        !!searchQuery && !shortcut.dataset.search?.includes(searchQuery);
+    });
+  }, [searchQuery]);
 
   return (
     <>
@@ -138,6 +172,13 @@ export const HelpDialog = ({ onClose }: { onClose?: () => void }) => {
         className={"HelpDialog"}
       >
         <Header />
+        <QuickSearch
+          ref={searchInputRef}
+          className="HelpDialog__search"
+          placeholder={t("quickSearch.placeholder")}
+          aria-label={t("quickSearch.placeholder")}
+          onChange={setSearchQuery}
+        />
         <Section title={t("helpDialog.shortcuts")}>
           <ShortcutIsland
             className="HelpDialog__island--tools"

@@ -8,11 +8,12 @@ import "./QuickSearch.scss";
 interface QuickSearchProps {
   className?: string;
   placeholder: string;
+  "aria-label"?: string;
   onChange: (term: string) => void;
 }
 
 export const QuickSearch = React.forwardRef<HTMLInputElement, QuickSearchProps>(
-  ({ className, placeholder, onChange }, ref) => {
+  ({ className, placeholder, "aria-label": ariaLabel, onChange }, ref) => {
     return (
       <div className={clsx("QuickSearch__wrapper", className)}>
         {searchIcon}
@@ -21,6 +22,7 @@ export const QuickSearch = React.forwardRef<HTMLInputElement, QuickSearchProps>(
           className="QuickSearch__input"
           type="text"
           placeholder={placeholder}
+          aria-label={ariaLabel}
           onChange={(e) => onChange(e.target.value.trim().toLowerCase())}
         />
       </div>
