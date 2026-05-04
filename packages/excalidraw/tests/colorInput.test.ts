@@ -1,5 +1,7 @@
 import { normalizeInputColor } from "@excalidraw/common";
 
+import { isValidHexColorInput } from "../components/ColorPicker/colorPickerUtils";
+
 describe("normalizeInputColor", () => {
   describe("hex colors", () => {
     it("returns hex color with hash as-is", () => {
@@ -110,5 +112,21 @@ describe("normalizeInputColor", () => {
       expect(normalizeInputColor("#ff")).toBe(null);
       expect(normalizeInputColor("rgb(")).toBe(null);
     });
+  });
+});
+
+describe("isValidHexColorInput", () => {
+  it("accepts 3, 4, 6, and 8 digit hex colors", () => {
+    expect(isValidHexColorInput("#abc")).toBe(true);
+    expect(isValidHexColorInput("abcd")).toBe(true);
+    expect(isValidHexColorInput("#aabbcc")).toBe(true);
+    expect(isValidHexColorInput("aabbccdd")).toBe(true);
+  });
+
+  it("rejects malformed hex colors", () => {
+    expect(isValidHexColorInput("#12345")).toBe(false);
+    expect(isValidHexColorInput("#zzzzzz")).toBe(false);
+    expect(isValidHexColorInput("notacolor")).toBe(false);
+    expect(isValidHexColorInput("")).toBe(false);
   });
 });
