@@ -112,6 +112,24 @@ const LINEAR_TYPES = [
   "curvedArrow",
   "elbowArrow",
 ] as const;
+const ARROW_TYPES: readonly ConvertibleLinearTypes[] = [
+  "sharpArrow",
+  "curvedArrow",
+  "elbowArrow",
+];
+
+const LINEAR_TYPE_ICONS: Record<ConvertibleLinearTypes, ReactNode> = {
+  line: LineIcon,
+  sharpArrow: sharpArrowIcon,
+  curvedArrow: roundArrowIcon,
+  elbowArrow: elbowArrowIcon,
+};
+
+const GENERIC_TYPE_ICONS: Record<ConvertibleGenericTypes, ReactNode> = {
+  rectangle: RectangleIcon,
+  diamond: DiamondIcon,
+  ellipse: EllipseIcon,
+};
 
 const CONVERTIBLE_GENERIC_TYPES: ReadonlySet<ConvertibleGenericTypes> = new Set(
   GENERIC_TYPES,
@@ -290,20 +308,14 @@ const Panel = ({
     }
   }, [genericElements, app.scene]);
 
-  const SHAPES: [string, ReactNode][] =
+  const SHAPES: [ConvertibleTypes, ReactNode][] =
     conversionType === "linear"
-      ? [
-          ["line", LineIcon],
-          ["sharpArrow", sharpArrowIcon],
-          ["curvedArrow", roundArrowIcon],
-          ["elbowArrow", elbowArrowIcon],
-        ]
+      ? getConvertibleLinearTypes(linearElements).map((type) => [
+          type,
+          LINEAR_TYPE_ICONS[type],
+        ])
       : conversionType === "generic"
-      ? [
-          ["rectangle", RectangleIcon],
-          ["diamond", DiamondIcon],
-          ["ellipse", EllipseIcon],
-        ]
+      ? GENERIC_TYPES.map((type) => [type, GENERIC_TYPE_ICONS[type]])
       : [];
 
   return (
@@ -508,6 +520,9 @@ export const convertElementTypes = (
     const convertibleLinearElements = filterLinearConvertibleElements(
       selectedElements,
     ) as ExcalidrawLinearElement[];
+    const convertibleLinearTypes = getConvertibleLinearTypes(
+      convertibleLinearElements,
+    );
 
     if (!nextType) {
       const commonSubType = reduceToCommonValue(
@@ -515,14 +530,20 @@ export const convertElementTypes = (
         getLinearElementSubType,
       );
 
-      const index = commonSubType ? LINEAR_TYPES.indexOf(commonSubType) : -1;
+      const index = commonSubType
+        ? convertibleLinearTypes.indexOf(commonSubType)
+        : -1;
       nextType =
-        LINEAR_TYPES[
-          (index + LINEAR_TYPES.length + advancement) % LINEAR_TYPES.length
+        convertibleLinearTypes[
+          (index + convertibleLinearTypes.length + advancement) %
+            convertibleLinearTypes.length
         ];
     }
 
-    if (isConvertibleLinearType(nextType)) {
+    if (
+      isConvertibleLinearType(nextType) &&
+      convertibleLinearTypes.includes(nextType)
+    ) {
       const convertedElements: ExcalidrawElement[] = [];
 
       const nextElementsMap: Map<ExcalidrawElement["id"], ExcalidrawElement> =
@@ -653,11 +674,24 @@ export const getConversionTypeFromElements = (
 };
 
 const isEligibleLinearElement = (element: ExcalidrawElement) => {
+  return isLinearElement(element);
+};
+
+const canConvertLinearElementToLine = (element: ExcalidrawLinearElement) => {
   return (
-    isLinearElement(element) &&
-    (!isArrowElement(element) ||
-      (!isArrowBoundToElement(element) && !hasBoundTextElement(element)))
+    !isArrowElement(element) ||
+    (!isArrowBoundToElement(element) && !hasBoundTextElement(element))
   );
+};
+
+const getConvertibleLinearTypes = (
+  elements: readonly ExcalidrawLinearElement[],
+): readonly ConvertibleLinearTypes[] => {
+  if (elements.some((element) => !canConvertLinearElementToLine(element))) {
+    return ARROW_TYPES;
+  }
+
+  return LINEAR_TYPES;
 };
 
 const toCacheKey = (
@@ -848,31 +882,35 @@ const convertElementType = <
   }
 
   if (isConvertibleLinearType(targetType)) {
+    const linearElement = element as ExcalidrawLinearElement;
+
     switch (targetType) {
       case "line": {
         return bumpVersion(
           newLinearElement({
-            ...element,
+            ...linearElement,
             type: "line",
           }),
         );
       }
       case "sharpArrow": {
-        return bumpVersion(
-          newArrowElement({
-            ...element,
+        return bumpVersion({
+          ...newArrowElement({
+            ...linearElement,
             type: "arrow",
             elbowed: false,
             roundness: null,
             startArrowhead: app.state.currentItemStartArrowhead,
             endArrowhead: app.state.currentItemEndArrowhead,
           }),
-        );
+          startBinding: linearElement.startBinding,
+          endBinding: linearElement.endBinding,
+        });
       }
       case "curvedArrow": {
-        return bumpVersion(
-          newArrowElement({
-            ...element,
+        return bumpVersion({
+          ...newArrowElement({
+            ...linearElement,
             type: "arrow",
             elbowed: false,
             roundness: {
@@ -881,18 +919,22 @@ const convertElementType = <
             startArrowhead: app.state.currentItemStartArrowhead,
             endArrowhead: app.state.currentItemEndArrowhead,
           }),
-        );
+          startBinding: linearElement.startBinding,
+          endBinding: linearElement.endBinding,
+        });
       }
       case "elbowArrow": {
-        return bumpVersion(
-          newArrowElement({
-            ...element,
+        return bumpVersion({
+          ...newArrowElement({
+            ...linearElement,
             type: "arrow",
             elbowed: true,
             fixedSegments: null,
             roundness: null,
           }),
-        );
+          startBinding: linearElement.startBinding,
+          endBinding: linearElement.endBinding,
+        });
       }
     }
   }
