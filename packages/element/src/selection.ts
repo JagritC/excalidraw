@@ -129,12 +129,22 @@ export const getElementsWithinSelection = (
   const framesInSelection = excludeElementsInFrames
     ? new Set<NonDeletedExcalidrawElement["id"]>()
     : null;
-  let elementsInSelection: NonDeletedExcalidrawElement[] = [];
+  const groups: Record<string, NonDeletedExcalidrawElement[]> = {};
+  const elementsInSelection: Set<NonDeletedExcalidrawElement> = new Set();
 
   for (const element of elements) {
     if (shouldIgnoreElementFromSelection(element)) {
       continue;
     }
+
+    // Track only selectable group members, so ignored elements such as bound
+    // text and locked elements don't block group completeness checks.
+    (element.groupIds ?? []).forEach((groupId) => {
+      if (!groups[groupId]) {
+        groups[groupId] = [];
+      }
+      groups[groupId].push(element);
+    });
 
     const strokeWidth = element.strokeWidth;
     let labelAABB: Bounds | null = null;
@@ -209,7 +219,7 @@ export const getElementsWithinSelection = (
       if (framesInSelection && isFrameLikeElement(element)) {
         framesInSelection.add(element.id);
       }
-      elementsInSelection.push(element);
+      elementsInSelection.add(element);
       continue;
     }
 
@@ -219,7 +229,7 @@ export const getElementsWithinSelection = (
       labelAABB &&
       doBoundsIntersect(selectionBounds, labelAABB)
     ) {
-      elementsInSelection.push(element);
+      elementsInSelection.add(element);
       continue;
     }
 
@@ -309,7 +319,7 @@ export const getElementsWithinSelection = (
           framesInSelection.add(element.id);
         }
 
-        elementsInSelection.push(element);
+        elementsInSelection.add(element);
         continue;
       }
     }
@@ -318,21 +328,50 @@ export const getElementsWithinSelection = (
     //    as it is separately handled in App.
   }
 
-  elementsInSelection = framesInSelection
-    ? excludeElementsFromFrames(elementsInSelection, framesInSelection)
-    : elementsInSelection;
+  if (framesInSelection) {
+    elementsInSelection.forEach((element) => {
+      if (element.frameId && framesInSelection.has(element.frameId)) {
+        elementsInSelection.delete(element);
+      }
+    });
+  }
 
-  elementsInSelection = elementsInSelection.filter((element) => {
-    const containingFrame = getContainingFrame(element, elementsMap);
+  elementsInSelection.forEach((element) => {
+    // If a group this element is part of already included, then we don't need
+    // to check this element separately again
+    const groupIds = element.groupIds ?? [];
+    const largestGroupId = groupIds.reduce<[string | null, number]>(
+      (acc, groupId) => {
+        const group = groups[groupId];
+        if (!group) {
+          return acc;
+        }
+        return group.length > acc[1] ? [groupId, group.length] : acc;
+      },
+      [null, -Infinity],
+    )[0];
 
-    if (containingFrame) {
-      return elementOverlapsWithFrame(element, containingFrame, elementsMap);
+    if (boxSelectionMode === "overlap") {
+      if (largestGroupId) {
+        groups[largestGroupId].forEach(
+          elementsInSelection.add.bind(elementsInSelection),
+        );
+      }
+    } else if (largestGroupId) {
+      if (groupIds.length > 0 && largestGroupId) {
+        const shouldInclude = groups[largestGroupId].every((groupElement) =>
+          elementsInSelection.has(groupElement),
+        );
+        if (!shouldInclude) {
+          elementsInSelection.delete(element);
+        }
+      }
     }
 
     return true;
   });
 
-  return elementsInSelection;
+  return Array.from(elementsInSelection);
 };
 
 export const getVisibleAndNonSelectedElements = (
