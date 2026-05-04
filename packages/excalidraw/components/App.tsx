@@ -3462,6 +3462,12 @@ class App extends React.Component<AppProps, AppState> {
     ) {
       setEraserCursor(this.interactiveCanvas, this.state.theme);
     }
+    if (
+      prevState.activeTool.type !== this.state.activeTool.type &&
+      !isHoldingSpace
+    ) {
+      setCursorForShape(this.interactiveCanvas, this.state);
+    }
 
     // Hide hyperlink popup if shown when element type is not selection
     if (
