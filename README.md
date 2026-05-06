@@ -82,7 +82,7 @@ We'll be adding these features as drop-in plugins for the npm package in the fut
 
 ## Quick start
 
-**Note:** following instructions are for installing the Excalidraw [npm package](https://www.npmjs.com/package/@excalidraw/excalidraw) when integrating Excalidraw into your own app. To run the repository locally for development, please refer to our [Development Guide](https://docs.excalidraw.com/docs/introduction/development).
+**Note:** following instructions are for installing the Excalidraw [npm package](https://www.npmjs.com/package/@excalidraw/excalidraw) when integrating Excalidraw into your own app. To run the repository locally for development, see [Repository development](#repository-development) below or refer to our [Development Guide](https://docs.excalidraw.com/docs/introduction/development).
 
 Use `npm` or `yarn` to install the package.
 
@@ -93,6 +93,30 @@ yarn add react react-dom @excalidraw/excalidraw
 ```
 
 Check out our [documentation](https://docs.excalidraw.com/docs/@excalidraw/excalidraw/installation) for more details!
+
+## Repository development
+
+This repository is a Yarn workspace monorepo. The published editor package lives in `packages/excalidraw/`, the production web app lives in `excalidraw-app/`, and shared packages such as `@excalidraw/common`, `@excalidraw/element`, `@excalidraw/math`, and `@excalidraw/utils` live under `packages/`.
+
+Install dependencies from the repository root:
+
+```bash
+yarn
+```
+
+Start the local web app:
+
+```bash
+yarn start
+```
+
+Common validation commands:
+
+```bash
+yarn test:typecheck  # TypeScript type checking
+yarn test:update     # Run tests with snapshot updates
+yarn fix             # Auto-fix formatting and linting issues
+```
 
 ## Contributing
 
